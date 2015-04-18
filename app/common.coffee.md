@@ -20,6 +20,7 @@ define Tabulars for aldeed:tabular
 	@TabularTables.Locations = new Tabular.Table
 		name: "Locations"
 		collection: Locations
+		order: [[0, "desc"]]
 		selector: (userId) -> {userId}
 		columns: [
 			##{	data: "_id", title: "ID"}
