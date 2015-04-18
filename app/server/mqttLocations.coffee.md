@@ -8,28 +8,30 @@ Start a mqtt connection and initialize a GeoCoder for later use.
 	Meteor.startup ->
 		mqttClient = mqtt.connect "mqtt://mqtt.macrozone.ch:1883", clientId: "fromServer"
 		geoCoder = new GeoCoder
-		mqttClient.on "connect", Meteor.bindEnvironment ->
-			mqttClient.on "message", Meteor.bindEnvironment (topic, data) ->
+		
+		mqttClient.on "message", Meteor.bindEnvironment (topic, data) ->
 
 The mqttClient received a message from the broker. Owntracks sends data as JSON-Strings [^fnOwntracks], 
 so it needs to be decoded. The timestamp 'tst' gets converted to a Javascript-Date
+			
+			data = JSON.parse data.toString "utf-8"
 
-				data = JSON.parse data.toString "utf-8"
-				data._id = data.tst
-				data.tst = new Date parseInt(data.tst,10)*1000
+			data._id = data.tst
+			data.tst = new Date parseInt(data.tst,10)*1000
 
 Find the User for the topic "location/:userId"
 
-				user = Topic.getUserForTopic topic
-				if user? and data._type is "location"
+			user = Topic.getUserForTopic topic
+			if user? and data._type is "location"
 
 decode the position (lat, lon) to an adress with a geoCoder-Service (google) and insert it to "Locations"
 
-					data.userId = user._id
-					data.geo = _.first geoCoder.reverse data.lat, data.lon
-					Locations.upsert data._id, data
+				data.userId = user._id
+				data.geo = _.first geoCoder.reverse data.lat, data.lon
+				console.log data
+				Locations.upsert data._id, data
 
-			mqttClient.on "error", -> console.log arguments
+		mqttClient.on "error", -> console.log arguments
 
 
 
