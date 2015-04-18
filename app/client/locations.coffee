@@ -1,5 +1,6 @@
 Router.route "/", 
 	template: "locations"
+	layoutTemplate: "layout"
 	onBeforeAction: ->
 		GoogleMaps.load()
 		@next()
@@ -16,25 +17,29 @@ Router.route "/",
 
 getLocationTitle = (location) ->
 	"#{location.tst} - #{location.geo?.city}, #{location.geo?.streetName}, #{location.geo?.streetNumber}"
+
+
+
 Template.locations.created = ->
 	GoogleMaps.ready "locationsMap", (map) =>
 		markers = {}
 		bounds = new google.maps.LatLngBounds
 		shouldSetBounds = no
-		@autorun ->
-			Locations.find().forEach (location) ->
-				position = new google.maps.LatLng location.lat, location.lon
-				unless markers[location._id]?
-					# is new
-					shouldSetBounds = yes
-					markers[location._id] = new google.maps.Marker
-						position: position
-						map: map.instance
-						title: getLocationTitle location
-				else
-					markers[location._id].setPosition position
+		getPosition = (location) -> new google.maps.LatLng location.lat, location.lon
+		Locations.find().observe 
+			added: (location) ->
+				position = getPosition location
+				markers[location._id] = new google.maps.Marker
+					position: position
+					map: map.instance
+					title: getLocationTitle location
 				bounds.extend position
-			if shouldSetBounds
-				
 				map.instance.fitBounds bounds
-				shouldSetBounds = no
+			changed: (location, oldLocation) ->
+				position = getPosition location
+				markers[location._id].setPosition position
+				bounds.extend position
+			removed: (location) ->
+				markers[location._id].setMap null
+				delete markers[location._id]
+				

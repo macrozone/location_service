@@ -14,7 +14,6 @@ stylus
 accounts-google
 accounts-ui
 accounts-password
-yogiben:admin
 twbs:bootstrap
 aldeed:autoform
 aldeed:geocoder
@@ -22,3 +21,4 @@ mquandalle:jade
 momentjs:moment
 outatime:geolib
 nimble:restivus
+aldeed:tabular

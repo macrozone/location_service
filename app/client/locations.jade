@@ -1,0 +1,8 @@
+
+template(name="locations")
+	.row.locations
+		.map.col-sm-5
+			+googleMap(name="locationsMap" options=options)
+
+		.locations.col-sm-7
+			+tabular(table=TabularTables.Locations class="table table-striped table-bordered table-condensed")
