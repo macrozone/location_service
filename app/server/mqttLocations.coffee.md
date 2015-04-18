@@ -28,7 +28,6 @@ decode the position (lat, lon) to an adress with a geoCoder-Service (google) and
 
 				data.userId = user._id
 				data.geo = _.first geoCoder.reverse data.lat, data.lon
-				console.log data
 				Locations.upsert data._id, data
 
 		mqttClient.on "error", -> console.log arguments
