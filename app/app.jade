@@ -1,0 +1,22 @@
+
+template(name="locations")
+	.row.locations
+		.map.col-sm-5
+			+googleMap(name="locationsMap" options=googleMapsOptions)
+		.locations.col-sm-7
+			+tabular(table=TabularTables.Locations class="table table-striped table-bordered table-condensed")
+
+template(name="layout")
+	.container-fluid
+		+loginButtons
+		if currentUser
+			+userInfo
+			+yield
+		else
+			.container 
+				.alert.alert-warning 
+					i.glyphicon.glyphicon-log-in 
+					|  Please login or register.
+
+template(name="userInfo")
+	p Owntracks-Topic: #{topicForCurrentUser}

@@ -1,9 +1,0 @@
-template(name="layout")
-	.container-fluid
-		+loginButtons
-		if currentUser
-			+userInfo
-		+yield
-
-template(name="userInfo")
-	p Owntracks-Topic: #{topicForCurrentUser}
