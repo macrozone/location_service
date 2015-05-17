@@ -38,7 +38,7 @@ Note: we do not need publishs for the client-view, because aldeed:tabular handle
 		if params?.to?
 			selector.tst ?= {}
 			selector.tst["$lte"] = params.to
-		Locations.find selector
+		Collections.Locations.find selector
 
 ## REST-API
 
