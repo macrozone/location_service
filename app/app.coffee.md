@@ -16,7 +16,8 @@ First we need a collection to store the locations of the users.
 	Collections = 
 		Locations: new Meteor.Collection "Locations"
 
-We define now a shared helper functions to get the topic string for a user or vis-verca
+We define now a shared helper functions to get the topic string for a user or vis-verca. 
+The topics have the pattern location/:userId
 
 	Topic = 
 		getTopicForUser: (user) -> "location/#{user._id}"
@@ -125,7 +126,7 @@ Helpers to start and stop subscriptions on the mqttClient
 ### Tabular
 
 The package aldeed:tabular will provide us with a data-table-like html-component. 
-We use it to show the location history to the user. 
+We use it to show the location history to the user. It is included in [app.jade](app.jade) as +tabular.
 Subscriptions are handled automatically, depending on the filters on the table.
 
 	TabularTables =
@@ -166,7 +167,8 @@ We define additionally some template-helpers on the client view
 
 ### Routes
 
-We define a route to show the user the current location history and where unauthorized users can login or register
+We define a route to show the user the current location history and where unauthorized users can login or register.
+This will map to the template defined in [app.jade](app.jade)
 
 	Router.route "/", 
 		template: "locations"
