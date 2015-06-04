@@ -1,5 +1,5 @@
 
-# Simple location service with Meteor
+# Simple location service with Meteor - app.coffee.md
 
 This app connects to a mqtt-broker that will receive location-data from "OwnTracks" 
 and will expose it in
@@ -13,7 +13,7 @@ and will expose it in
 
 First we need a collection to store the locations of the users.
 
-	Collections = 
+	@Collections = 
 		Locations: new Meteor.Collection "Locations"
 
 We define now a shared helper functions to get the topic string for a user or vis-verca. 
@@ -126,7 +126,7 @@ Helpers to start and stop subscriptions on the mqttClient
 ### Tabular
 
 The package aldeed:tabular will provide us with a data-table-like html-component. 
-We use it to show the location history to the user. It is included in [app.jade](app.jade) as +tabular.
+We use it to show the location history to the user. It is included in [app.jade](app.jade) as `+tabular`.
 Subscriptions are handled automatically, depending on the filters on the table.
 
 	TabularTables =
@@ -135,9 +135,11 @@ Subscriptions are handled automatically, depending on the filters on the table.
 			collection: Collections.Locations
 			order: [[0, "desc"]]
 			columns: [
+				
 				{
 					data: "tst"
 					title: "Time"
+					width: "80px"
 					render: (val) ->
 						moment(val).calendar()
 				},
@@ -145,16 +147,38 @@ Subscriptions are handled automatically, depending on the filters on the table.
 					data: "geo"
 					title: "Address"
 					render: (geo) ->
-						"#{geo.city}, #{geo.streetName} #{geo.streetNumber}" if geo?
+						"<span class='flag flag-#{geo.countryCode?.toLowerCase()}'></span> 
+						#{geo.city ? ''}, #{geo.streetName ? ''} #{geo.streetNumber ? ''}" if geo?
 				}
 				{data: "lat", title: "Latitude", width: "80px"}
 				{data: "lon", title: "Longitude", width: "80px"}
-				{data: "batt", title: "Battery", width: "40px"}
+				{data: "batt", title: "Batt.", width: "20px"}
+				{tmpl: Meteor.isClient and Template.optionsCell, width: "1px"}
 			]
 
 Restrict the data to the current user.
 
 			selector: (userId) -> {userId}
+
+To delete entries, we attach events to the optionsCell-template:
+
+	if Meteor.isClient
+		Template.optionsCell.events
+			'click .btn-delete': -> 
+				Meteor.call "deleteTimeEntries", @_id
+			'click .btn-delete-newer': ->
+				Meteor.call "deleteTimeEntries", @_id, "newer"
+			'click .btn-delete-older': -> 
+				Meteor.call "deleteTimeEntries", @_id, "older"
+
+	Meteor.methods deleteTimeEntries: (_id, mode) ->
+		entry = Collections.Locations.findOne _id
+		Collections.Locations.remove _id
+		switch mode
+			when "newer" then Collections.Locations.remove userId: @userId, tst: $gt: entry.tst
+			when "older" then Collections.Locations.remove userId: @userId, tst: $lt: entry.tst
+		
+
 
 We define additionally some template-helpers on the client view
 
@@ -190,6 +214,7 @@ We use the package dburles:google-maps for that.
 			GoogleMaps.load()
 			GoogleMaps.ready "locationsMap", (map) =>
 				markers = {}
+				
 				bounds = new google.maps.LatLngBounds
 				shouldSetBounds = no
 				getPosition = (location) -> new google.maps.LatLng location.lat, location.lon

@@ -1,10 +1,17 @@
 
 template(name="locations")
 	.row.locations
-		.map.col-sm-5
-			+googleMap(name="locationsMap" options=googleMapsOptions)
-		.locations.col-sm-7
-			+tabular(table=TabularTables.Locations class="table table-striped table-bordered table-condensed")
+		.col-md-5
+			.panel.panel-default
+				.panel-heading 
+					.glyphicon.glyphicon-map-marker
+					| Map
+				.panel-body.map
+					+googleMap(name="locationsMap" options=googleMapsOptions)
+		.col-md-7
+			.panel.panel-default
+				.panel-body.locations
+					+tabular(table=TabularTables.Locations class="table table-striped table-bordered table-condensed")
 
 template(name="layout")
 	.container-fluid
@@ -14,9 +21,57 @@ template(name="layout")
 			+yield
 		else
 			.container 
+				.jumbotron
+					h1 location.macrozone.ch
+					p A location service in 
+						a(href="https://meteor.com/") Meteor
+						| using 
+						a(href="http://owntracks.org/") OwnTracks
+						| and
+						a(href="http://mqtt.org/") mqtt
 				.alert.alert-warning 
 					i.glyphicon.glyphicon-log-in 
 					|  Please login or register.
+		+howTo
 
 template(name="userInfo")
-	p Owntracks-Topic: #{topicForCurrentUser}
+	.alert.alert-info 
+		.glyphicon.glyphicon-info-sign
+		| Use this topic in OwnTracks: 
+		strong #{topicForCurrentUser}
+
+template(name="optionsCell")
+	.btn-group
+		button.btn.btn-danger.dropdown-toggle(data-toggle="dropdown", aria-expanded="false")
+			i.glyphicon.glyphicon-remove
+		ul.dropdown-menu.dropdown-menu-right(role="menu")
+			li 
+				a.btn-delete 
+					i.glyphicon.glyphicon-remove
+					| Delete this
+			li
+				a.btn-delete-newer 
+					i.glyphicon.glyphicon-arrow-up
+					| Delete this and newer
+			li
+				a.btn-delete-older
+					i.glyphicon.glyphicon-arrow-down
+					| Delete this and older
+
+template(name="howTo")
+	.howTo.container
+		.panel.panel-info
+			.panel-heading 
+				.glyphicon.glyphicon-info-sign
+				| HowTo
+			.panel-body
+				+markdown
+					1. Create an account on this service (click on **sign in** top left)
+					2. Download [OwnTracks](http://owntracks.org/) for Android or IOS	| 
+					3. Configure OwnTracks as following:
+						
+						- **Host**: lab.macrozone.ch
+						- **Port**: 8883
+						- **Security**: TLS, you can download the certificate [here](/lab.macrozone.ch.crt).
+						- **Authentification**: None. The secret is currently your topic, so keep it save.
+						- **Topic**: you'll see the topic once you created an account
