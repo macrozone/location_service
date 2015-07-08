@@ -7,8 +7,10 @@ template(name="locations")
 				.panel-heading 
 					.glyphicon.glyphicon-map-marker
 					| Map
-				.panel-body.map
-					+googleMap(name="locationsMap" options=googleMapsOptions)
+				.panel-body
+					.map
+						+googleMap(name="locationsMap" options=googleMapsOptions)
+					+travelDistanceInfo
 		.col-md-7
 			.panel.panel-default
 				.panel-body.locations
@@ -40,6 +42,9 @@ template(name="userInfo")
 		.glyphicon.glyphicon-info-sign
 		| Use this topic in OwnTracks: 
 		strong #{topicForCurrentUser}
+
+template(name="travelDistanceInfo")
+	p you traveled #{distance} km in this range!
 
 template(name="optionsCell")
 	.btn-group

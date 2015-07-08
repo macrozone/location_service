@@ -239,5 +239,18 @@ We now observe now the current data in the Locations-Collection and add markers 
 						delete markers[location._id]
 
 				Template.locations.onDestroyed -> observeHandle.stop()
+
+
+## Travel distance
+
+	if Meteor.isClient
+		Template.travelDistanceInfo.helpers
+			distance: ->
+				path = Collections.Locations.find({}, sort: tst: 1).map (location) ->
+					latitude: location.lat
+					longitude: location.lon
+				geolib.getPathLength(path)/1000
+
+
 					
 

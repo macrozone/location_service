@@ -11,7 +11,6 @@ coffeescript
 dburles:google-maps
 iron:router
 stylus
-accounts-google
 accounts-ui
 accounts-password
 twbs:bootstrap
