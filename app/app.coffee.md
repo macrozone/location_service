@@ -16,13 +16,6 @@ First we need a collection to store the locations of the users.
 	@Collections = 
 		Locations: new Meteor.Collection "Locations"
 
-We define now a shared helper functions to get the topic string for a user or vis-verca. 
-The topics have the pattern location/:userId
-
-	Topic = 
-		getTopicForUser: (user) -> "location/#{user._id}"
-		getUserIdForTopic: (topic) -> topic.split("/")[1]
-		getUserForTopic: (topic) -> Meteor.users.findOne @getUserIdForTopic topic
 
 ## DDP-API
 
@@ -32,6 +25,8 @@ Note: we do not need publishs for the client-view, because aldeed:tabular handle
 
 	if Meteor.isServer then Meteor.publish "myLocations", (params)->
 		selector = userId: @userId
+		if params.type
+			selector._type = type
 		if params?.from?
 			selector.tst ?= {}
 			selector.tst["$gte"] = params.from
@@ -65,6 +60,11 @@ First, start a mqtt connection to the broker as soon as the server starts:
 			rejectUnauthorized: no
 		mqttClient.on "error", Meteor.bindEnvironment (error) -> console.log error
 
+And subscribe to the topic
+		
+		mqttClient.on "connect", Meteor.bindEnvironment ->
+			mqttClient.subscribe "owntracks/#"
+
 We initialize a geocoder (google by default), that will resolve our position to adresses.
 
 		geoCoder = new GeoCoder
@@ -79,47 +79,22 @@ Owntracks sends data as JSON-Strings, so it needs to be decoded.
 The timestamp 'tst' gets converted to a Javascript-Date. 
 We use the old timestamp as the id for the message to prevent duplicates:
 			
-			message_id = data.tst
 			data = JSON.parse data.toString "utf-8"
+			message_id = data.tst
+			console.log data
 			data.tst = new Date parseInt(data.tst,10)*1000
 
-Find the User for the topic "location/:userId", 
+Find the User for the topic "owntracks/email", 
 decode the position (lat, lon) to an adress with the geocoder and insert it into "Locations"
 
-			user = Topic.getUserForTopic topic
-			if user? and data._type is "location"
+			[_OWNTRACKS, email, device] = topic.split "/"
+
+			user = Meteor.users.findOne emails: $elemMatch: address: email
+			if user?
 				data.userId = user._id
 				data.geo = _.first geoCoder.reverse data.lat, data.lon
+				data.device = device
 				Collections.Locations.upsert message_id, data
-
-### Handle mqtt-subscriptions for users
-
-We subscribe for every user and stop subscriptions for removed users.
-We start observing users after (re-) connect to the broker. In case of re-connect, stop the old observation
-	 
-		userObserveHandle = null
-		mqttClient.on "connect", Meteor.bindEnvironment ->
-			console.log "connected to mqtt-broker"
-			userObserveHandle?.stop()
-			userObserveHandle = Meteor.users.find().observe 
-				added: (user) ->
-					startSubscriptionForUser user
-				removed: (user) ->
-					stopSubscriptionForUser user
-
-Helpers to start and stop subscriptions on the mqttClient
-
-		startSubscriptionForUser = (user) ->
-			startSubscription Topic.getTopicForUser user
-		stopSubscriptionForUser = (user) ->
-			stopSubscription Topic.getTopicForUser user
-		startSubscription = (topic) ->
-			console.log "subscribed to #{topic}"
-			mqttClient.subscribe topic
-		stopSubscription = (topic) ->
-			console.log "unsubscribed to #{topic}"
-			mqttClient.unsubscribe topic
-
 
 ## Client Views
 
@@ -134,6 +109,7 @@ Subscriptions are handled automatically, depending on the filters on the table.
 			name: "Locations"
 			collection: Collections.Locations
 			order: [[0, "desc"]]
+			extraFields: ["desc", "_type"]
 			columns: [
 				
 				{
@@ -146,10 +122,18 @@ Subscriptions are handled automatically, depending on the filters on the table.
 				{
 					data: "geo"
 					title: "Address"
-					render: (geo) ->
-						"<span class='flag flag-#{geo.countryCode?.toLowerCase()}'></span> 
-						#{geo.city ? ''}, #{geo.streetName ? ''} #{geo.streetNumber ? ''}" if geo?
+					render: (geo, type, doc) ->
+						html = ""
+						if doc.desc
+							html += "<i class='glyphicon glyphicon-home'></i> #{doc.desc}<br />"
+						html += 
+							"<span class='flag flag-#{geo.countryCode?.toLowerCase()}'></span> 
+							#{geo.city ? ''}, #{geo.streetName ? ''} #{geo.streetNumber ? ''}" if geo?
+						return html
+						
+							
 				}
+				{data: "device", title: "Device.", width: "40px"}
 				{data: "lat", title: "Latitude", width: "80px"}
 				{data: "lon", title: "Longitude", width: "80px"}
 				{data: "batt", title: "Batt.", width: "20px"}
@@ -185,8 +169,6 @@ We define additionally some template-helpers on the client view
 	if Meteor.isClient
 		Template.registerHelper "dateFormat", (date) -> 
 			(moment date).format("YYYY-MMM-DD HH:mm") 
-		Template.registerHelper "topicForCurrentUser", -> 
-			Topic.getTopicForUser Meteor.user()
 		Template.registerHelper('TabularTables', TabularTables)
 
 ### Routes
@@ -245,11 +227,19 @@ We now observe now the current data in the Locations-Collection and add markers 
 
 	if Meteor.isClient
 		Template.travelDistanceInfo.helpers
-			distance: ->
-				path = Collections.Locations.find({}, sort: tst: 1).map (location) ->
+			stats: ->
+
+				distance = geolib.getPathLength Collections.Locations.find({}, sort: tst: 1).map (location) ->
 					latitude: location.lat
 					longitude: location.lon
-				geolib.getPathLength(path)/1000
+				first = Collections.Locations.findOne({}, sort: tst: 1)?.tst
+				last = Collections.Locations.findOne({}, sort: tst: -1)?.tst
+				if first? and last?
+					duration = (last.getTime() - first.getTime())/1000 # seconds
+				
+				distance: distance/1000
+				speed: if duration? then distance/duration
+				
 
 
 					

@@ -40,11 +40,12 @@ template(name="layout")
 template(name="userInfo")
 	.alert.alert-info 
 		.glyphicon.glyphicon-info-sign
-		| Use this topic in OwnTracks: 
-		strong #{topicForCurrentUser}
+		| Use your email adresse as username in owntracks
+
 
 template(name="travelDistanceInfo")
-	p you traveled #{distance} km in this range!
+	with stats
+		p you traveled #{distance} km in this range with speed #{speed}
 
 template(name="optionsCell")
 	.btn-group
