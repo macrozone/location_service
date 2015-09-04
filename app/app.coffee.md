@@ -80,8 +80,7 @@ The timestamp 'tst' gets converted to a Javascript-Date.
 We use the old timestamp as the id for the message to prevent duplicates:
 			
 			data = JSON.parse data.toString "utf-8"
-			message_id = data.tst
-			console.log data
+			message_id = data.tst.toString()
 			data.tst = new Date parseInt(data.tst,10)*1000
 
 Find the User for the topic "owntracks/email", 
