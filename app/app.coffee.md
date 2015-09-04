@@ -25,8 +25,8 @@ Note: we do not need publishs for the client-view, because aldeed:tabular handle
 
 	if Meteor.isServer then Meteor.publish "myLocations", (params)->
 		selector = userId: @userId
-		if params.type
-			selector._type = type
+		if params.type?
+			selector._type = params.type
 		if params?.from?
 			selector.tst ?= {}
 			selector.tst["$gte"] = params.from
